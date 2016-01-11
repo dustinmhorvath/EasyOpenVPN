@@ -1,7 +1,7 @@
 # EasyOpenVPN
 Simple (ish) script for installation of OpenVPN server.
 
-## Still in testing. Don't use this quite yet, as it still has a couple minor hangups (easy-rsa vars writing).
+### This script should *work*, though testing is still ongoing. Let me know if you have issues.
 
 #### This script performs the following:
 - Installs all necessary packages.
@@ -16,4 +16,6 @@ Simple (ish) script for installation of OpenVPN server.
 - Configuration gets written to user creation scripts for later use, so you don't have to repeat yourself.
 
 
-This script uses Expect to emulate a user terminal environment (so it can pretend to input things on your behalf). This is used both by the installer and by the user creation script. If you've already completed the setup and created all your users, you can remove Expect and recover ~60mb of disk space.
+Notes:
+- This script uses Expect to emulate a user terminal environment (so it can pretend to input things on your behalf). This is used both by the installer and by the user creation script. If you've already completed the setup and created all your users, you can remove Expect and recover ~60mb of disk space.
+- This script successfully sets everything up so that it works. It *doesn't yet set easy-rsa vars*. If this bugs you, you can change it yourself for now, probably. I'll probably have it fixed in a few days so that it prompts for these inputs once and replaces them in vars.
