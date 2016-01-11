@@ -29,7 +29,7 @@ KEYSIZE=2048
 
 DEBIAN_FRONTEND=noninteractive apt-get update && apt-get upgrade -y &>/dev/null
 
-DEBIAN_FRONTEND=noninteractive apt-get install openvpn easy-rsa expect iptables-persistent -y &>/dev/null
+DEBIAN_FRONTEND=noninteractive apt-get install openvpn easy-rsa expect -y &>/dev/null
 
 cp /usr/share/easy-rsa /etc/openvpn/easy-rsa -r
 
@@ -262,6 +262,14 @@ CHECK=$?
 if [ $CHECK -eq 0 ]; then
         echo "Iptables rules already exist."
         else
-		iptables-save | grep -- "-t nat -A POSTROUTING -o eth0 -j MASQUERADE"
-		iptables-save | grep -- "-t nat -A POSTROUTING -s 10.8.0.0/24 -o $NET -j SNAT --to-source $LOCAL_IP"
-	fi
+                iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+                iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $NET -j SNAT --to-source $LOCAL_IP
+        fi
+if grep -q "pre-up iptables-restore < /etc/iptables.rules" /etc/network/interfaces ; then
+        echo "Network interfaces rule already exists."
+        else
+                sed -i "/iface $NET/a pre-up iptables-restore < /etc/iptables.rules" /etc/network/interfaces
+                echo "Added pre-up rule to network interfaces."
+        fi
+
+
