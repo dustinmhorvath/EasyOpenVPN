@@ -9,7 +9,7 @@ Confirmed working on fresh machine, though testing is still ongoing. Let me know
 - Sets up certificate authority and builds server keys and certs.
 - Implements 3DES and HMAC.
 - Creates simple script for generating user .ovpn files containing all the necessary keys and certificates the client needs to connect.
-- Enables IP forwarding and Masquerading
+- Enables IP forwarding and Masquerading.
 
 #### Requires minimal user input:
 - Give the required information ONCE, then never again.
@@ -17,9 +17,9 @@ Confirmed working on fresh machine, though testing is still ongoing. Let me know
 - Configuration gets written to user creation scripts for later use, so you don't have to repeat yourself.
 
 #### Using this script:
-1. Clone. Change some values in the top of the script to match what you need.
-2. Run the install script.
-3. Use the script /etc/openvpn/createUser.sh to build new users
+1. Clone or copypasta. Change the values in the top of the script to match what you need.
+2. Run the install script. It'll ask a few server-relevant questions at the beginning.
+3. Use the script /etc/openvpn/createUser.sh to build new users.
 4. Retrieve their .ovpn files from /etc/openvpn/easy-rsa/keys/ and transfer to clients for connecting.
 
 Notes:
