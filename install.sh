@@ -267,7 +267,7 @@ if [ $CHECK -eq 0 ]; then
                 iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
                 iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $NET -j SNAT --to-source $LOCAL_IP
         fi
-if grep -q "pre-up iptables-restore < /etc/iptables.rules" /etc/network/interfaces ; then
+if grep -q "post-up iptables-restore < /etc/iptables.rules" /etc/network/interfaces ; then
         echo "Network interfaces rule already exists."
         else
                 sed -i "/iface $NET/a pre-up iptables-restore < /etc/iptables.rules" /etc/network/interfaces
