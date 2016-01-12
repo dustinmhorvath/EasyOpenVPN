@@ -6,9 +6,9 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 read -p 'Provide a name for the OpenVPN server (default "server"): ' CN
-read -p "Domain name or external IP address of server:" DOMAIN
-read -p "Port on which OpenVPN will be available (default 1194):" PORT
-read -p "Address of DNS nameserver that clients will use (default 8.8.8.8):" DNS
+read -p "Domain name or external IP address of server: " DOMAIN
+read -p "Port on which OpenVPN will be available (default 1194): " PORT
+read -p "Address of DNS nameserver that clients will use (default 8.8.8.8): " DNS
 
 
 # SCRIPT STARTS HERE
@@ -25,10 +25,13 @@ KEYSIZE=2048
 
 if [ -z "$CN" ]; then
 	CN="server"
+	fi
 if [ -z "$PORT" ]; then
 	PORT="1194"
+	fi
 if [ -z "$DNS" ]; then
 	DNS="8.8.8.8"
+	fi
 
 echo "Updating and upgrading packages..."
 DEBIAN_FRONTEND=noninteractive apt-get update &>/dev/null && apt-get upgrade -y &>/dev/null
