@@ -27,8 +27,9 @@ NET=$(ifconfig -a | sed 's/[ \t].*//;/^\(lo\|\)$/d')
 # For now this is defaulting on 2048. Will add option later to make this selectable.
 KEYSIZE=2048
 
+echo "Updating and upgrading packages..."
 DEBIAN_FRONTEND=noninteractive apt-get update && apt-get upgrade -y &>/dev/null
-
+echo "Installing new packages..."
 DEBIAN_FRONTEND=noninteractive apt-get install openvpn easy-rsa expect -y &>/dev/null
 
 cp /usr/share/easy-rsa /etc/openvpn/easy-rsa -r
@@ -212,6 +213,7 @@ echo "New password for user:"
 read -s PW
 
 cd /etc/openvpn/easy-rsa
+source ./vars
 
 # Generate client certificate and key
 expect << EOF
