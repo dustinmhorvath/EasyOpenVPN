@@ -23,14 +23,14 @@ LOCAL_IP=$(ip route get 8.8.8.8 | awk '{ print $NF; exit }')
 IP_BASE=`echo $LOCAL_IP | cut -d"." -f1-3`
 LOCAL_SUBNET=`echo $IP_BASE".0"`
 # Get network interface name
-NET=$(ifconfig -a | sed 's/[ \t].*//;/^\(lo\|\)$/d')
+NET=$(ifconfig -a | sed 's/[ \t].*//;/^\(lo\|tun[0-9]*\|\)$/d')
 # For now this is defaulting on 2048. Will add option later to make this selectable.
 KEYSIZE=2048
 
 echo "Updating and upgrading packages..."
-DEBIAN_FRONTEND=noninteractive apt-get update && apt-get upgrade -y &>/dev/null
+DEBIAN_FRONTEND=noninteractive apt-get update &>/dev/null && apt-get upgrade -y &>/dev/null
 echo "Installing new packages..."
-DEBIAN_FRONTEND=noninteractive apt-get install openvpn easy-rsa expect -y &>/dev/null
+DEBIAN_FRONTEND=noninteractive apt-get install openvpn easy-rsa expect iptables-persistent -y &>/dev/null
 
 cp /usr/share/easy-rsa /etc/openvpn/easy-rsa -r
 
@@ -259,19 +259,22 @@ sed -i '/net.ipv4.ip_forward=1/s/^#//g' /etc/sysctl.conf
 sysctl -p
 
 # Enable iptables masquerading if not already done.
-iptables -t nat -C POSTROUTING -o eth0 -j MASQUERADE &>/dev/null
+iptables -t nat -C POSTROUTING -o $NET -j MASQUERADE &>/dev/null
 CHECK=$?
 if [ $CHECK -eq 0 ]; then
-        echo "Iptables rules already exist."
+        echo "Iptables rules already exist (1)."
         else
-                iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+                iptables -t nat -A POSTROUTING -o $NET -j MASQUERADE
+        fi
+
+iptables -t nat -C POSTROUTING -s 10.8.0.0/24 -o $NET -j SNAT --to-source $LOCAL_IP &>/dev/null
+CHECK=$?
+if [ $CHECK -eq 0 ]; then
+        echo "Iptables rules already exist (2)."
+        else
                 iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $NET -j SNAT --to-source $LOCAL_IP
         fi
-if grep -q "post-up iptables-restore < /etc/iptables.rules" /etc/network/interfaces ; then
-        echo "Network interfaces rule already exists."
-        else
-                sed -i "/iface $NET/a pre-up iptables-restore < /etc/iptables.rules" /etc/network/interfaces
-                echo "Added pre-up rule to network interfaces."
-        fi
 
+DEBIAN_FRONTEND=noninteractive dpkg-reconfigure iptables-persistent
 
+service openvpn restart
