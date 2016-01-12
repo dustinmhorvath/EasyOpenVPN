@@ -5,8 +5,8 @@ if [[ $EUID -ne 0 ]]; then
 	exit
 fi
 
+read -p "Resolvable domain name or external IP address of server: " DOMAIN
 read -p 'Provide a name for the OpenVPN server (default "server"): ' CN
-read -p "Domain name or external IP address of server: " DOMAIN
 read -p "Port on which OpenVPN will be available (default 1194): " PORT
 read -p "Address of DNS nameserver that clients will use (default 8.8.8.8): " DNS
 
@@ -216,9 +216,9 @@ cat <<"CREATEUSER" > /etc/openvpn/createUser.sh
 read -p "Username of new client: " USER
 while true
 do
-    read -s -p "Password: " PW
+    read -s -p "Create user password: " PW
     echo
-    read -s -p "Password (again): " PW2
+    read -s -p "Confirm password: " PW2
     echo
     [ "$PW" = "$PW2" ] && break
     echo "Mismatch. Please try again."
