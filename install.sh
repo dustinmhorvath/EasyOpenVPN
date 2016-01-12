@@ -238,7 +238,7 @@ EOF
 cd keys
 
 # Generate client 3DES key
-expect -d << EOF
+expect << EOF
 spawn openssl rsa -in $USER.key -des3 -out $USER.3des.key
 expect "pass phrase for" { send "$PW\r" }
 expect "Enter PEM pass" { send "$PW\r" }
