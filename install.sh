@@ -1,5 +1,19 @@
 #!/bin/bash
 
+CERT_KEY_COUNTRY="US"
+CERT_KEY_PROVINCE="Kansas"
+CERT_KEY_CITY="Lawrence"
+CERT_KEY_ORG="Openvpn"
+CERT_KEY_EMAIL="user@herp.derp"
+CERT_KEY_OU="Infrastructure"
+CERT_KEY_NAME="Openvpn"
+# This can probably be left on 2048. 4096 is bananas.
+CERT_KEY_SIZE="2048"
+
+
+
+# SCRIPT STARTS HERE
+
 if [[ $EUID -ne 0 ]]; then
 	echo "This script requires elevated privileges to run. Are you root?"
 	exit
@@ -10,9 +24,6 @@ read -p 'Provide a name for the OpenVPN server (default "server"): ' CN
 read -p "Port on which OpenVPN will be available (default 1194): " PORT
 read -p "Address of DNS nameserver that clients will use (default 8.8.8.8): " DNS
 
-
-# SCRIPT STARTS HERE
-
 # Get some environment and system variables
 DATE=$(date +"%Y%m%d%H%M")
 LOCAL_IP=$(ip route get 8.8.8.8 | awk '{ print $NF; exit }')
@@ -20,8 +31,6 @@ IP_BASE=`echo $LOCAL_IP | cut -d"." -f1-3`
 LOCAL_SUBNET=`echo $IP_BASE".0"`
 # Get network interface name
 NET=$(ifconfig -a | sed 's/[ \t].*//;/^\(lo\|tun[0-9]*\|\)$/d')
-# For now this is defaulting on 2048. Will add option later to make this selectable.
-KEYSIZE=2048
 
 if [ -z "$CN" ]; then
 	CN="server"
@@ -41,6 +50,16 @@ DEBIAN_FRONTEND=noninteractive apt-get install openvpn easy-rsa expect iptables-
 cp /usr/share/easy-rsa /etc/openvpn/easy-rsa -r
 
 cd /etc/openvpn/easy-rsa/
+
+cp vars vars.backup$DATE
+sed -i "s/\(KEY_COUNTRY=\).*/\1$CERT_KEY_COUNTRY/" vars
+sed -i "s/\(KEY_PROVINCE=\).*/\1$CERT_KEY_PROVINCE/" vars
+sed -i "s/\(KEY_CITY=\).*/\1$CERT_KEY_CITY/" vars
+sed -i "s/\(KEY_ORG=\).*/\1$CERT_KEY_ORG/" vars
+sed -i "s/\(KEY_EMAIL=\).*/\1$CERT_KEY_EMAIL/" vars
+sed -i "s/\(KEY_OU=\).*/\1$CERT_KEY_OU/" vars
+sed -i "s/\(KEY_NAME=\).*/\1$CERT_KEY_NAME/" vars
+sed -i "s/\(KEY_SIZE=\).*/\1$CERT_KEY_SIZE/" vars
 
 source ./vars
 ./clean-all
@@ -92,7 +111,7 @@ port $PORT
 ca /etc/openvpn/easy-rsa/keys/ca.crt
 cert /etc/openvpn/easy-rsa/keys/$CN.crt
 key /etc/openvpn/easy-rsa/keys/$CN.key
-dh /etc/openvpn/easy-rsa/keys/dh$KEYSIZE.pem
+dh /etc/openvpn/easy-rsa/keys/dh$CERT_KEY_SIZE.pem
 server 10.8.0.0 255.255.255.0
 ifconfig 10.8.0.1 10.8.0.2
 push "route 10.8.0.1 255.255.255.255"
