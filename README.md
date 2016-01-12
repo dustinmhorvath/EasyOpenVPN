@@ -17,10 +17,9 @@ Confirmed working on fresh machine, though testing is still ongoing. Let me know
 - Configuration gets written to user creation scripts for later use, so you don't have to repeat yourself.
 
 #### Using this script:
-1. Clone or copypasta. Change the values in the top of the script to match what you need.
-2. Run the install script. It'll ask a few server-relevant questions at the beginning.
-3. Use the script /etc/openvpn/createUser.sh to build new users.
-4. Retrieve their .ovpn files from /etc/openvpn/easy-rsa/keys/ and transfer to clients for connecting.
+1. Run the install script. It'll ask a few server-relevant questions at the beginning.
+2. Use the script /etc/openvpn/createUser.sh to build new users.
+3. Retrieve their .ovpn files from /etc/openvpn/easy-rsa/keys/ and transfer to clients for connecting.
 
 Notes:
 - This script uses Expect to emulate a user terminal environment (so it can pretend to input things on your behalf). This is used both by the installer and by the user creation script. If you've already completed the setup and created all your users, you can remove Expect and recover ~60mb of disk space.
