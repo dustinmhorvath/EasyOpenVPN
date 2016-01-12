@@ -5,14 +5,10 @@ if [[ $EUID -ne 0 ]]; then
 	exit
 fi
 
-echo "Provide a name for the OpenVPN server:"
-read CN
-echo "Port on which OpenVPN will be available:"
-read PORT
-echo "Address of DNS nameserver that clients will use:"
-read DNS
-echo "Domain name or external IP address of server:"
-read DOMAIN
+read -p "Provide a name for the OpenVPN server: " CN
+read -p "Port on which OpenVPN will be available:" PORT
+read -p "Address of DNS nameserver that clients will use:" DNS
+read -p "Domain name or external IP address of server:" DOMAIN
 
 
 # SCRIPT STARTS HERE
@@ -207,11 +203,16 @@ chmod +x /etc/openvpn/easy-rsa/makeOVPN.sh
 cat <<"CREATEUSER" > /etc/openvpn/createUser.sh
 #!/bin/bash
 
-echo "Name of user to create:"
-read USER
-echo "New password for user:"
-read -s PW
-
+read -p "Username of new client: " USER
+while true
+do
+    read -s -p "Password: " PW
+    echo
+    read -s -p "Password (again): " PW2
+    echo
+    [ "$PW" = "$PW2" ] && break
+    echo "Mismatch. Please try again."
+done
 cd /etc/openvpn/easy-rsa
 source ./vars
 
