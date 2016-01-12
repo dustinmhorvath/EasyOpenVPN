@@ -1,7 +1,7 @@
 # EasyOpenVPN
 Simple (ish) script for installation of OpenVPN server.
 
-#### This script works, though testing is still ongoing. Let me know if you have issues.
+Confirmed working on fresh machine, though testing is still ongoing. Let me know if you have issues.
 
 #### This script performs the following:
 - Installs all necessary packages.
