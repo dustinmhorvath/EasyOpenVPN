@@ -5,10 +5,10 @@ if [[ $EUID -ne 0 ]]; then
 	exit
 fi
 
-read -p "Provide a name for the OpenVPN server: " CN
-read -p "Port on which OpenVPN will be available:" PORT
-read -p "Address of DNS nameserver that clients will use:" DNS
+read -p 'Provide a name for the OpenVPN server (default "server"): ' CN
 read -p "Domain name or external IP address of server:" DOMAIN
+read -p "Port on which OpenVPN will be available (default 1194):" PORT
+read -p "Address of DNS nameserver that clients will use (default 8.8.8.8):" DNS
 
 
 # SCRIPT STARTS HERE
@@ -22,6 +22,13 @@ LOCAL_SUBNET=`echo $IP_BASE".0"`
 NET=$(ifconfig -a | sed 's/[ \t].*//;/^\(lo\|tun[0-9]*\|\)$/d')
 # For now this is defaulting on 2048. Will add option later to make this selectable.
 KEYSIZE=2048
+
+if [ -z "$CN" ]; then
+	CN="server"
+if [ -z "$PORT" ]; then
+	PORT="1194"
+if [ -z "$DNS" ]; then
+	DNS="8.8.8.8"
 
 echo "Updating and upgrading packages..."
 DEBIAN_FRONTEND=noninteractive apt-get update &>/dev/null && apt-get upgrade -y &>/dev/null
