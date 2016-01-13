@@ -23,6 +23,7 @@ read -p "Resolvable domain name or external IP address of server: " DOMAIN
 read -p 'Provide a name for the OpenVPN server (default "server"): ' CN
 read -p "Port on which OpenVPN will be available (default 1194): " PORT
 read -p "Address of DNS nameserver that clients will use (default 8.8.8.8): " DNS
+read -p "Network interface for OpenVPN (default eth0): " NET
 
 # Get some environment and system variables
 DATE=$(date +"%Y%m%d%H%M")
@@ -30,7 +31,6 @@ LOCAL_IP=$(ip route get 8.8.8.8 | awk '{ print $NF; exit }')
 IP_BASE=`echo $LOCAL_IP | cut -d"." -f1-3`
 LOCAL_SUBNET=`echo $IP_BASE".0"`
 # Get network interface name
-NET=$(ifconfig -a | sed 's/[ \t].*//;/^\(lo\|tun[0-9]*\|\)$/d')
 
 if [ -z "$CN" ]; then
 	CN="server"
@@ -40,6 +40,9 @@ if [ -z "$PORT" ]; then
 	fi
 if [ -z "$DNS" ]; then
 	DNS="8.8.8.8"
+	fi
+if [ -z "$NET" ]; then
+	NET="eth0"
 	fi
 
 echo "Updating and upgrading packages..."
@@ -308,3 +311,5 @@ if [ $CHECK -eq 0 ]; then
 DEBIAN_FRONTEND=noninteractive dpkg-reconfigure iptables-persistent
 
 service openvpn restart
+
+echo "OpenVPN setup complete."
