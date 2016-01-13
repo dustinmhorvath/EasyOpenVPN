@@ -310,6 +310,6 @@ if [ $CHECK -eq 0 ]; then
 
 DEBIAN_FRONTEND=noninteractive dpkg-reconfigure iptables-persistent
 
-service openvpn restart
+service openvpn restart &>/dev/null
 
 echo "OpenVPN setup complete."
