@@ -19,6 +19,8 @@ if [[ $EUID -ne 0 ]]; then
 	exit
 fi
 
+echo "Note: this script will destroy any files on /etc/openvpn/easy-rsa/*"
+
 read -p "Resolvable domain name or external IP address of server: " DOMAIN
 read -p 'Provide a name for the OpenVPN server (default "server"): ' CN
 read -p "Port on which OpenVPN will be available (default 1194): " PORT
