@@ -27,13 +27,7 @@ read -p "Port on which OpenVPN will be available (default 1194): " PORT
 read -p "Address of DNS nameserver that clients will use (default 8.8.8.8): " DNS
 read -p "Network interface for OpenVPN (default eth0): " NET
 
-# Get some environment and system variables
-DATE=$(date +"%Y%m%d%H%M")
-LOCAL_IP=$(ip route get 8.8.8.8 | awk '{ print $NF; exit }')
-IP_BASE=`echo $LOCAL_IP | cut -d"." -f1-3`
-LOCAL_SUBNET=`echo $IP_BASE".0"`
-# Get network interface name
-
+# Some defaults if no input
 if [ -z "$CN" ]; then
 	CN="server"
 	fi
@@ -47,15 +41,26 @@ if [ -z "$NET" ]; then
 	NET="eth0"
 	fi
 
-echo "Updating and upgrading packages..."
-DEBIAN_FRONTEND=noninteractive apt-get update &>/dev/null && apt-get upgrade -y &>/dev/null
+# Get some environment and system variables
+DATE=$(date +"%Y%m%d%H%M")
+LOCAL_IP=$(ip route get 8.8.8.8 | awk '{ print $NF; exit }')
+IP_BASE=`echo $LOCAL_IP | cut -d"." -f1-3`
+LOCAL_SUBNET=`echo $IP_BASE".0"`
+
+echo "Updating..."
+DEBIAN_FRONTEND=noninteractive apt-get update &>/dev/null
 echo "Installing new packages..."
 DEBIAN_FRONTEND=noninteractive apt-get install openvpn easy-rsa expect iptables-persistent -y &>/dev/null
 
+# Move this folder because it might have keys in it
+if [ -d "/etc/openvpn/easyrsa" ]; then
+	mv /etc/openvpn/easyrsa 2> /etc/openvpn/easy-rsa.backup$DATE
+fi
 cp /usr/share/easy-rsa /etc/openvpn/easy-rsa -r
 
 cd /etc/openvpn/easy-rsa/
 
+# Copy these all into 'vars'
 cp vars vars.backup$DATE
 sed -i "s/\(KEY_COUNTRY=\).*/\1$CERT_KEY_COUNTRY/" vars
 sed -i "s/\(KEY_PROVINCE=\).*/\1$CERT_KEY_PROVINCE/" vars
@@ -66,6 +71,7 @@ sed -i "s/\(KEY_OU=\).*/\1$CERT_KEY_OU/" vars
 sed -i "s/\(KEY_NAME=\).*/\1$CERT_KEY_NAME/" vars
 sed -i "s/\(KEY_SIZE=\).*/\1$CERT_KEY_SIZE/" vars
 
+# Clean the directory
 source ./vars
 ./clean-all
 
@@ -312,6 +318,6 @@ if [ $CHECK -eq 0 ]; then
 
 DEBIAN_FRONTEND=noninteractive dpkg-reconfigure iptables-persistent
 
-service openvpn restart &>/dev/null
+service openvpn restart
 
 echo "OpenVPN setup complete."
