@@ -23,7 +23,8 @@ echo "Note: this script will destroy any files on /etc/openvpn/easy-rsa/*"
 
 read -p "Resolvable domain name or external IP address of server: " DOMAIN
 read -p 'Provide a name for the OpenVPN server (default "server"): ' CN
-read -p "Port on which OpenVPN will be available (default 1194): " PORT
+read -p "INternal port on which OpenVPN will be served (default 1194): " SERVERPORT
+read -p "EXternal port on which client will connect (default 1194): " CLIENTPORT
 read -p "Address of DNS nameserver that clients will use (default 8.8.8.8): " DNS
 read -p "Network interface for OpenVPN (default eth0): " NET
 
@@ -31,8 +32,8 @@ read -p "Network interface for OpenVPN (default eth0): " NET
 if [ -z "$CN" ]; then
 	CN="server"
 	fi
-if [ -z "$PORT" ]; then
-	PORT="1194"
+if [ -z "$SERVERPORT" ]; then
+	SERVERPORT="1194"
 	fi
 if [ -z "$DNS" ]; then
 	DNS="8.8.8.8"
@@ -118,7 +119,7 @@ cat <<EOT > /etc/openvpn/$CN.conf
 local $LOCAL_IP
 dev tun
 proto udp
-port $PORT
+port $SERVERPORT
 ca /etc/openvpn/easy-rsa/keys/ca.crt
 cert /etc/openvpn/easy-rsa/keys/$CN.crt
 key /etc/openvpn/easy-rsa/keys/$CN.key
@@ -151,7 +152,7 @@ cat <<EOT > /etc/openvpn/easy-rsa/client-template.txt
 client
 dev tun
 proto udp
-remote $DOMAIN $PORT
+remote $DOMAIN $CLIENTPORT
 resolv-retry infinite
 nobind
 persist-key
@@ -348,7 +349,7 @@ UFWBEFORE
         fi
 
 sed -i 's/\(DEFAULT_FORWARD_POLICY=\).*/\1"ACCEPT"/' /etc/default/ufw
-ufw allow $PORT
+ufw allow $SERVERPORT
 ufw reload
 
 fi
