@@ -305,7 +305,7 @@ sysctl -p
 
 
 PKG_OK=$(dpkg-query -W --showformat='${Status}\n' ufw|grep "install ok installed") || true
-echo Checking for mysql-server: $PKG_OK
+echo Checking for ufw: $PKG_OK
 if [ "" == "$PKG_OK" ]; then
 
 	# Enable iptables masquerading if not already done.
