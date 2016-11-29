@@ -1,6 +1,6 @@
 #!/bin/bash
-NET=eth0
-SERVERPORT=1194
+NET=
+SERVERPORT=
 
 if grep -Fxq "# START OPENVPN RULES" /etc/ufw/before.rules
 then
