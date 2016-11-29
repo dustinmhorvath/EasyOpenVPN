@@ -176,6 +176,7 @@ FILEEXT=".ovpn"
 CRT=".crt"
 KEY=".3des.key"
 CA="ca.crt"
+SERVER=$CN
 TA="ta.key"
 NAME=$1
 
@@ -209,29 +210,29 @@ echo "tls-auth Private Key found: $TA"
 
 #Ready to make a new .opvn file - Start by populating with the
 # default file
-cat ../$DEFAULT > $NAME$FILEEXT
+cat ../$DEFAULT > $SERVER-$NAME$FILEEXT
 
 #Now, append the CA Public Cert
-echo "<ca>" >> $NAME$FILEEXT
-cat $CA >> $NAME$FILEEXT
-echo "</ca>" >> $NAME$FILEEXT
+echo "<ca>" >> $SERVER-$NAME$FILEEXT
+cat $CA >> $SERVER-$NAME$FILEEXT
+echo "</ca>" >> $SERVER-$NAME$FILEEXT
 
 #Next append the client Public Cert
-echo "<cert>" >> $NAME$FILEEXT
-cat $NAME$CRT | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' >> $NAME$FILEEXT
-echo "</cert>" >> $NAME$FILEEXT
+echo "<cert>" >> $SERVER-$NAME$FILEEXT
+cat $NAME$CRT | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' >> $SERVER-$NAME$FILEEXT
+echo "</cert>" >> $SERVER-$NAME$FILEEXT
 
 #Then, append the client Private Key
-echo "<key>" >> $NAME$FILEEXT
-cat $NAME$KEY >> $NAME$FILEEXT
-echo "</key>" >> $NAME$FILEEXT
+echo "<key>" >> $SERVER-$NAME$FILEEXT
+cat $NAME$KEY >> $SERVER-$NAME$FILEEXT
+echo "</key>" >> $SERVER-$NAME$FILEEXT
 
 #Finally, append the TA Private Key
-echo "<tls-auth>" >> $NAME$FILEEXT
-cat $TA >> $NAME$FILEEXT
-echo "</tls-auth>" >> $NAME$FILEEXT
+echo "<tls-auth>" >> $SERVER-$NAME$FILEEXT
+cat $TA >> $SERVER-$NAME$FILEEXT
+echo "</tls-auth>" >> $SERVER-$NAME$FILEEXT
 
-echo "Done! $NAME$FILEEXT Successfully Created."
+echo "Done! $SERVER-$NAME$FILEEXT Successfully Created."
 
 #Script written by Eric Jodoin
 # Cleaned up by Dustin Horvath. Modified to take user as cli argument.
@@ -299,24 +300,57 @@ cp /etc/sysctl.conf /etc/sysctl.conf.backup$DATE
 sed -i '/net.ipv4.ip_forward=1/s/^#//g' /etc/sysctl.conf
 sysctl -p
 
-# Enable iptables masquerading if not already done.
-iptables -t nat -C POSTROUTING -o $NET -j MASQUERADE &>/dev/null
-CHECK=$?
-if [ $CHECK -eq 0 ]; then
-        echo "Iptables rules already exist (1)."
-        else
-                iptables -t nat -A POSTROUTING -o $NET -j MASQUERADE
+
+PKG_OK=$(dpkg-query -W --showformat='${Status}\n' ufw|grep "install ok installed") || true
+echo Checking for mysql-server: $PKG_OK
+if [ "" == "$PKG_OK" ]; then
+
+	# Enable iptables masquerading if not already done.
+	iptables -t nat -C POSTROUTING -o $NET -j MASQUERADE &>/dev/null
+	CHECK=$?
+	if [ $CHECK -eq 0 ]; then
+		echo "Iptables rules already exist (1)."
+		else
+			iptables -t nat -A POSTROUTING -o $NET -j MASQUERADE
+		fi
+
+	iptables -t nat -C POSTROUTING -s 10.8.0.0/24 -o $NET -j SNAT --to-source $LOCAL_IP &>/dev/null
+	CHECK=$?
+	if [ $CHECK -eq 0 ]; then
+		echo "Iptables rules already exist (2)."
+		else
+			iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $NET -j SNAT --to-source $LOCAL_IP
+		fi
+
+	DEBIAN_FRONTEND=noninteractive dpkg-reconfigure iptables-persistent
+
+else
+
+	if grep -Fxq "# START OPENVPN RULES" /etc/ufw/before.rules
+        	then
+                	echo "UFW before.rules already configured."
+        	else
+
+cat << UFWBEFORE >> /etc/ufw/before.rules
+# START OPENVPN RULES
+# NAT table rules
+*nat
+:POSTROUTING ACCEPT [0:0]
+# Allow traffic from OpenVPN client to $NET
+-A POSTROUTING -s 10.8.0.0/8 -o $NET -j MASQUERADE
+COMMIT
+# END OPENVPN RULES
+
+UFWBEFORE
+
         fi
 
-iptables -t nat -C POSTROUTING -s 10.8.0.0/24 -o $NET -j SNAT --to-source $LOCAL_IP &>/dev/null
-CHECK=$?
-if [ $CHECK -eq 0 ]; then
-        echo "Iptables rules already exist (2)."
-        else
-                iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $NET -j SNAT --to-source $LOCAL_IP
-        fi
+sed -i 's/\(DEFAULT_FORWARD_POLICY=\).*/\1"ACCEPT"/' /etc/default/ufw
+ufw allow $PORT
+ufw reload
 
-DEBIAN_FRONTEND=noninteractive dpkg-reconfigure iptables-persistent
+fi
+
 
 service openvpn restart
 
