@@ -176,7 +176,7 @@ FILEEXT=".ovpn"
 CRT=".crt"
 KEY=".3des.key"
 CA="ca.crt"
-SERVER=$CN
+SERVER=
 TA="ta.key"
 NAME=$1
 
@@ -238,6 +238,8 @@ echo "Done! $SERVER-$NAME$FILEEXT Successfully Created."
 # Cleaned up by Dustin Horvath. Modified to take user as cli argument.
 \
 EOT
+
+sed -i "s/\(SERVER=\).*/\1\"$CN\"/" /etc/openvpn/easy-rsa/makeOVPN.sh
 chmod +x /etc/openvpn/easy-rsa/makeOVPN.sh
 
 # Write user creation script.
