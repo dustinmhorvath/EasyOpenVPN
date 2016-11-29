@@ -35,6 +35,9 @@ if [ -z "$CN" ]; then
 if [ -z "$SERVERPORT" ]; then
 	SERVERPORT="1194"
 	fi
+if [ -z "$CLIENTPORT" ]; then
+	SERVERPORT="1194"
+	fi
 if [ -z "$DNS" ]; then
 	DNS="8.8.8.8"
 	fi
