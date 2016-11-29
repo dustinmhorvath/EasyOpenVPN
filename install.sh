@@ -45,11 +45,21 @@ if [ -z "$NET" ]; then
 	NET="eth0"
 	fi
 
+WORKINGDIR=`pwd`
+
 # Get some environment and system variables
 DATE=$(date +"%Y%m%d%H%M")
 LOCAL_IP=$(ip route get 8.8.8.8 | awk '{ print $NF; exit }')
 IP_BASE=`echo $LOCAL_IP | cut -d"." -f1-3`
 LOCAL_SUBNET=`echo $IP_BASE".0"`
+
+
+# Inject vars into other scripts
+sed -i "s/\(NET=\).*/\1$NET/" $WORKINGDIR/ufwpunch.sh
+sed -i "s/\(SERVERPORT=\).*/\1$SERVERPORT/" $WORKINGDIR/ufwpunch.sh
+sed -i "s/\(NET=\).*/\1$NET/" $WORKINGDIR/iptablespunch.sh
+sed -i "s/\(LOCAL_IP=\).*/\1$LOCAL_IP/" $WORKINGDIR/iptablespunch.sh
+
 
 echo "Updating..."
 DEBIAN_FRONTEND=noninteractive apt-get update &>/dev/null
@@ -310,51 +320,9 @@ sysctl -p
 PKG_OK=$(dpkg-query -W --showformat='${Status}\n' ufw|grep "install ok installed") || true
 echo Checking for ufw: $PKG_OK
 if [ "" == "$PKG_OK" ]; then
-
-	# Enable iptables masquerading if not already done.
-	iptables -t nat -C POSTROUTING -o $NET -j MASQUERADE &>/dev/null
-	CHECK=$?
-	if [ $CHECK -eq 0 ]; then
-		echo "Iptables rules already exist (1)."
-		else
-			iptables -t nat -A POSTROUTING -o $NET -j MASQUERADE
-		fi
-
-	iptables -t nat -C POSTROUTING -s 10.8.0.0/24 -o $NET -j SNAT --to-source $LOCAL_IP &>/dev/null
-	CHECK=$?
-	if [ $CHECK -eq 0 ]; then
-		echo "Iptables rules already exist (2)."
-		else
-			iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $NET -j SNAT --to-source $LOCAL_IP
-		fi
-
-	DEBIAN_FRONTEND=noninteractive dpkg-reconfigure iptables-persistent
-
+	$WORKINGDIR/iptablespunch.sh
 else
-
-	if grep -Fxq "# START OPENVPN RULES" /etc/ufw/before.rules
-        	then
-                	echo "UFW before.rules already configured."
-        	else
-
-cat << UFWBEFORE >> /etc/ufw/before.rules
-# START OPENVPN RULES
-# NAT table rules
-*nat
-:POSTROUTING ACCEPT [0:0]
-# Allow traffic from OpenVPN client to $NET
--A POSTROUTING -s 10.8.0.0/8 -o $NET -j MASQUERADE
-COMMIT
-# END OPENVPN RULES
-
-UFWBEFORE
-
-        fi
-
-sed -i 's/\(DEFAULT_FORWARD_POLICY=\).*/\1"ACCEPT"/' /etc/default/ufw
-ufw allow $SERVERPORT
-ufw reload
-
+	$WORKINGDIR/ufwpunch.sh
 fi
 
 
